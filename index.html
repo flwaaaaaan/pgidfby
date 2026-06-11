@@ -67,18 +67,22 @@
         </div>
     </div>
 
-    <div id="rocketModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header"><h2>🚀 账户获取</h2><span class="close" onclick="closeModal('rocketModal')">&times;</span></div>
-            <div class="modal-body">
-                <div id="accountStatus" class="account-status">正在同步账户...</div>
-                <div id="accountList" class="account-list"></div>
-            </div>
-            <div class="modal-footer"><p>⚠️ <b>使用说明:</b><br>1. 在 App Store 退出当前账户，使用共享账户登录。<br>2. 下载所需应用后，**立即退出**，并登录回您自己的 Apple ID。</p></div>
+        <div id="rocketModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><h2>🚀 账户获取</h2><span class="close" onclick="closeModal('rocketModal')">&times;</span></div>
+        <div class="modal-body">
+            <img src="/img/1.png" alt="使用教程" class="tutorial-img">
+            
+            <div id="accountStatus" class="account-status">正在同步账户...</div>
+            <div id="accountList" class="account-list"></div>
         </div>
+        <div class="modal-footer"><p>⚠️ <b>使用说明:</b><br>1. 在 App Store 退出当前账户，使用共享账户登录。<br>2. 下载所需应用后，**立即退出**，并登录回您自己的 Apple ID。</p></div>
     </div>
+</div>
 
+    
     <script>
+        // 记得替换成主人自己的 Worker 链接喵！
         const SCRAPER_WORKER_URL = 'https://pgg.zzxxcc.de/';
 
         function showModal(modalId) {
@@ -118,30 +122,36 @@
             } catch (error) {
                 console.error("Fetch failed:", error);
                 statusDiv.classList.add('status-fail');
-                statusDiv.innerHTML = `❌ 同步失败，源站可能无法访问或已更改布局。`;
+                statusDiv.innerHTML = `❌ 同步失败，源站可能无法访问或配置错误。`;
                 listDiv.innerHTML = '<p style="text-align:center; color: var(--text-dark);">未能获取到任何账户信息。</p>';
             }
         }
 
         function createAccountHTML(account) {
             const isNormal = account.available;
-            const statusText = isNormal ? '正常' : '异常';
+            const statusText = account.status || (isNormal ? '正常' : '异常');
             const itemClass = isNormal ? 'account-item' : 'account-item abnormal';
             const badgeClass = isNormal ? 'status-badge normal' : 'status-badge abnormal';
-            const infoHtml = account.info ? `<div class="account-info">ℹ️ ${account.info}</div>` : '';
+            
+            const regionHtml = (account.region && account.region !== '未知') 
+                ? `<span class="region-badge">🌍 ${account.region}</span>` 
+                : '';
 
-            // UPDATED: Added a button group and the new "Copy Account" button
             return `
                 <div class="${itemClass}">
                     <div class="account-header">
-                        <span class="account-email">${account.email}</span>
-                        <span class="${badgeClass}">${statusText}</span>
+                        <span class="account-email">${account.account}</span>
+                        <div class="badge-group">
+                            ${regionHtml}
+                            <span class="${badgeClass}">${statusText}</span>
+                        </div>
                     </div>
-                    ${infoHtml}
                     <div class="account-details">
-                        <span><small>🕒 上次检查: ${account.updateTime || 'N/A'}</small></span>
+                        <div class="time-info">
+                            <span>🕒 更新时间: ${account.time || '未知'}</span>
+                        </div>
                         <div class="button-group">
-                            <button class="copy-btn" onclick="copyText('${account.email}', this, '✅ 账号已复制!')">复制账号</button>
+                            <button class="copy-btn" onclick="copyText('${account.account}', this, '✅ 账号已复制!')">复制账号</button>
                             <button class="copy-btn" onclick="copyText('${account.password}', this, '✅ 密码已复制!')">复制密码</button>
                         </div>
                     </div>
@@ -149,7 +159,6 @@
             `;
         }
         
-        // UPDATED: The copyText function now accepts a custom success message
         function copyText(text, element, successMessage = '✅ 已复制!') {
             if (!navigator.clipboard) {
                 alert('复制失败，您的浏览器不支持安全剪贴板功能。');
@@ -158,10 +167,12 @@
             navigator.clipboard.writeText(text).then(() => {
                 const originalText = element.textContent;
                 element.textContent = successMessage;
-                element.style.backgroundColor = '#1ed760';
+                element.style.backgroundColor = 'rgba(30, 215, 96, 0.4)';
+                element.style.borderColor = '#1ed760';
                 setTimeout(() => {
                     element.textContent = originalText;
                     element.style.backgroundColor = '';
+                    element.style.borderColor = '';
                 }, 2000);
             });
         }
